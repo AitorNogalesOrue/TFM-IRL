@@ -32,7 +32,7 @@ def update_q_table(state, action, reward, next_state):
 
 def main():
     env = gym.make('MountainCar-v0')
-    demonstrations = np.load(file="app\expert_demo\expert_demo.npy")
+    demonstrations = np.load(file="expert_demo\expert_demo.npy")
     
     feature_estimate = app.FeatureEstimate(feature_num, env)
     
@@ -74,8 +74,8 @@ def main():
             score_avg = np.mean(scores)
             print('{} episode score is {:.2f}'.format(episode, score_avg))
             pylab.plot(episodes, scores, 'b')
-            pylab.savefig("app/learning_curves/app_eps_60001.png")
-            np.save("app/results/app_q_table1", arr=q_table)
+            pylab.savefig("learning_curves/app_eps_60001.png")
+            np.save("results/app_q_table1", arr=q_table)
 
         if episode % 5000 == 0:
             # optimize weight per 5000 episode

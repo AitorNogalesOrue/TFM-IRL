@@ -1,7 +1,9 @@
 import sys
 sys.path.append('./')
+
 import numpy as np
 import cvxpy as cp
+from scipy.optimize import minimize
 from train_pole import idx_state
 
 class FeatureEstimate:
@@ -72,8 +74,9 @@ def expert_feature_expectation(feature_num, gamma, demonstrations, env):
 
 def QP_optimizer(feature_num, learner, expert):
     w = cp.Variable(feature_num)
-    
+   
     obj_func = cp.Minimize(cp.norm(w))
+
     constraints = [(expert-learner) * w >= 2] 
 
     prob = cp.Problem(obj_func, constraints)
@@ -81,6 +84,23 @@ def QP_optimizer(feature_num, learner, expert):
 
     if prob.status == "optimal":
         print("status:", prob.status)
+        print("optimal value", prob.value)
+    
+        weights = np.squeeze(np.asarray(w.value))
+        return weights, prob.status
+    else:
+        print("status:", prob.status)
+        
+        weights = np.zeros(feature_num)
+        return weights, prob.status
+    #w = feature_num
+    #obj_func = lambda w,a,b: (a-b) * w
+
+    #prob =minimize(obj_func,w,tol=1e-6)
+
+
+    if prob.status == 0:
+        print("status:", prob.message)
         print("optimal value", prob.value)
     
         weights = np.squeeze(np.asarray(w.value))

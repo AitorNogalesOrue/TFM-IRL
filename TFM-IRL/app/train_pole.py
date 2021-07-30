@@ -15,17 +15,28 @@ q_table = np.zeros((n_states, n_actions))  # (400, 3)
 gamma = 0.99
 q_learning_rate = 0.03
 
+#def idx_state(env, state):
+#    env_low = env.observation_space.low
+#    env_high = env.observation_space.high
+#    s=state*10
+#    env_distance_0 = (env_high[0]*10 - env_low[0]*10)
+#    env_distance_2 = (env_high[2]*10 - env_low[2]*10)
+    
+#    position=int((s[0]+env_low[0]*10)/env_distance_0)
+#    angel=int((s[2]+env_low[2]*10)/env_distance_2)
+#    state_idx = position + angel
+#    return state_idx
+
 def idx_state(env, state):
     env_low = env.observation_space.low
     env_high = env.observation_space.high
-    s=state*10
-    env_distance_0 = (env_high[0]*10 - env_low[0]*10)
-    env_distance_2 = (env_high[2]*10 - env_low[2]*10)
-    
-    position=int((s[0]+env_low[0]*10)/env_distance_0)
-    angel=int((s[2]+env_low[2]*10)/env_distance_2)
+    s=state*100
+    position=int(s[0])
+    angel=int(s[2])
     state_idx = position + angel
+
     return state_idx
+
 
 def update_q_table(state, action, reward, next_state):
     q_1 = q_table[state][action]
@@ -35,7 +46,7 @@ def update_q_table(state, action, reward, next_state):
 
 def main():
     env = gym.make('CartPole-v1')
-    demonstrations = np.load(file="app\expert_demo\expert_demo_pole.npy")
+    demonstrations = np.load(file="expert_demo\expert_demo_pole.npy")
     
     feature_estimate = app_pole.FeatureEstimate(feature_num, env)
     
@@ -77,8 +88,8 @@ def main():
             score_avg = np.mean(scores)
             print('{} episode score is {:.2f}'.format(episode, score_avg))
             pylab.plot(episodes, scores, 'b')
-            pylab.savefig("app/learning_curves/app_eps_pole_60000.png")
-            np.save("app/results/app_q_table_pole.npy", arr=q_table)
+            pylab.savefig("learning_curves/app_eps_pole_60000.png")
+            np.save("results/app_q_table_pole.npy", arr=q_table)
 
         if episode % 5000 == 0:
             # optimize weight per 5000 episode
