@@ -4,24 +4,27 @@ import torch
 import argparse
 
 from model import Actor, Critic
-from utils.utils import get_action
-from utils.running_state import ZFilter
+from utils.utils import get_action,save_pickle
+#from utils.running_state import ZFilter
+from utils.zfilter import ZFilter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--env', type=str, default="Hopper-v2",
+parser.add_argument('--env', type=str, default="LunarLanderContinuous-v2",
                     help='name of Mujoco environement')
-parser.add_argument('--iter', type=int, default=5,
+parser.add_argument('--iter', type=int, default=500,
                     help='number of episodes to play')
-parser.add_argument("--load_model", type=str, default='ppo_max.tar',
+parser.add_argument("--load_model", type=str, default='ckpt_216.pth.tar',
                      help="if you test pretrained file, write filename in save_model folder")
+parser.add_argument('--hidden_size', type=int, default=64, 
+                    help='hidden unit size of actor, critic networks (default: 64)')
 
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
     env = gym.make(args.env)
-    env.seed(500)
-    torch.manual_seed(500)
+    env.seed(42)
+    torch.manual_seed(42)
 
     num_inputs = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]
@@ -29,8 +32,8 @@ if __name__ == "__main__":
     print("state size: ", num_inputs)
     print("action size: ", num_actions)
 
-    actor = Actor(num_inputs, num_actions)
-    critic = Critic(num_inputs)
+    actor = Actor(num_inputs, num_actions ,args.hidden_size)
+    critic = Critic(num_inputs, args.hidden_size)
 
     running_state = ZFilter((num_inputs,), clip=5)
     
@@ -53,13 +56,20 @@ if __name__ == "__main__":
 
 
     actor.eval(), critic.eval()
-    for episode in range(args.iter):
+    memory2=[]
+    a=0
+    episode=0
+    for a in range(1500):
+        episode+=1
         state = env.reset()
         steps = 0
         score = 0
+        episodelist=[]
         for _ in range(10000):
-            env.render()
-            mu, std, _ = actor(torch.Tensor(state).unsqueeze(0))
+            
+            #env.render()
+
+            mu, std = actor(torch.Tensor(state).unsqueeze(0))
             action = get_action(mu, std)[0]
 
             next_state, reward, done, _ = env.step(action)
@@ -67,7 +77,18 @@ if __name__ == "__main__":
             
             state = next_state
             score += reward
+            newlist=list(state[:])
+            newlist.extend(list(action[:]))
+            #newlist.append(reward)
+            episodelist.append(newlist)
             
             if done:
-                print("{} cumulative reward: {}".format(episode, score))
                 break
+        if score > 190:
+            a+=1
+            print("{} cumulative reward: {}".format(episode, score))
+            memory2.extend(episodelist)
+            
+    demo_path = os.path.join(os.getcwd(),'expert_demo')
+    pickle_path = os.path.join(demo_path, 'expert_demo.p')
+    save_pickle(memory2,pickle_path)

@@ -5,23 +5,26 @@ import argparse
 
 from model import Actor, Critic
 from utils.utils import get_action
-from utils.running_state import ZFilter
+from utils.zfilter import ZFilter
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--env', type=str, default="Hopper-v2",
+parser.add_argument('--env', type=str, default="LunarLanderContinuous-v2",
                     help='name of Mujoco environement')
 parser.add_argument('--iter', type=int, default=5,
                     help='number of episodes to play')
 parser.add_argument("--load_model", type=str, default='ppo_max.tar',
                      help="if you test pretrained file, write filename in save_model folder")
+parser.add_argument('--hidden_size', type=int, default=64, 
+                    help='hidden unit size of actor, critic networks (default: 64)')
+
 
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
     env = gym.make(args.env)
-    env.seed(500)
-    torch.manual_seed(500)
+    env.seed(42)
+    torch.manual_seed(42)
 
     num_inputs = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]

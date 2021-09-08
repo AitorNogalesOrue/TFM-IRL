@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 from utils.utils import *
 from utils.zfilter import ZFilter
 from model import Actor, Critic, Discriminator
-from train_model import train_actor_critic, train_discrim
+from gail import train_actor_critic, train_discrim
 
 parser = argparse.ArgumentParser(description='PyTorch GAIL')
 parser.add_argument('--env_name', type=str, default="LunarLanderContinuous-v2", 
@@ -45,8 +45,10 @@ parser.add_argument('--suspend_accu_exp', type=float, default=0.8,
                     help='accuracy for suspending discriminator about expert data (default: 0.8)')
 parser.add_argument('--suspend_accu_gen', type=float, default=0.8,
                     help='accuracy for suspending discriminator about generated data (default: 0.8)')
-parser.add_argument('--max_iter_num', type=int, default=4000,
-                    help='maximal number of main iterations (default: 4000)')
+#parser.add_argument('--max_iter_num', type=int, default=1200,
+                    #help='maximal number of main iterations (default: 1200)')
+parser.add_argument('--episode_num', type=int, default=10000,
+                    help='maximal number of episodes (default: 15000)')
 parser.add_argument('--seed', type=int, default=42,
                     help='random seed (default: 42)')
 parser.add_argument('--logdir', type=str, default='logs',
@@ -66,9 +68,9 @@ def main_gail():
     print('state size:', num_inputs) 
     print('action size:', num_actions)
 
-    actor = Actor(num_inputs, num_actions, args)
-    critic = Critic(num_inputs, args)
-    discrim = Discriminator(num_inputs + num_actions, args)
+    actor = Actor(num_inputs, num_actions, args.hidden_size)
+    critic = Critic(num_inputs, args.hidden_size)
+    discrim = Discriminator(num_inputs + num_actions, args.hidden_size)
 
     actor_optim = optim.Adam(actor.parameters(), lr=args.learning_rate)
     critic_optim = optim.Adam(critic.parameters(), lr=args.learning_rate, 
@@ -79,8 +81,7 @@ def main_gail():
     expert_demo = pickle.load(open('expert_demo\expert_demo.p', "rb"))
     demonstrations = np.array(expert_demo)
     print("demonstrations.shape", demonstrations.shape)
-    
-    writer = SummaryWriter(args.logdir)
+    writer = SummaryWriter(comment="-gail_episode_num-" + str(args.episode_num))
 
     if args.load_model is not None:
         saved_ckpt_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
@@ -99,8 +100,9 @@ def main_gail():
     
     episodes = 0
     train_discrim_flag = True
-
-    for iter in range(args.max_iter_num):
+    iter = 0
+    while True:
+        iter+=1
         actor.eval(), critic.eval()
         memory = deque()
 
@@ -141,10 +143,12 @@ def main_gail():
             
             episodes += 1
             scores.append(score)
+        if episodes > args.episode_num:
+            break
         
         score_avg = np.mean(scores)
         print('{}:: {} episode score is {:.2f}'.format(iter, episodes, score_avg))
-        writer.add_scalar('log/score', float(score_avg), iter)
+        writer.add_scalar('log/score', float(score_avg), episodes)
 
         actor.train(), critic.train(), discrim.train()
         if train_discrim_flag:

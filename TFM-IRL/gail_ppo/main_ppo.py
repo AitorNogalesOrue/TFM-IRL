@@ -39,8 +39,10 @@ parser.add_argument('--total_sample_size', type=int, default=2048,
                     help='total sample size to collect before PPO update (default: 2048)')
 parser.add_argument('--batch_size', type=int, default=64, 
                     help='batch size to update (default: 64)')
-parser.add_argument('--max_iter_num', type=int, default=1200,
-                    help='maximal number of main iterations (default: 512)')
+#parser.add_argument('--max_iter_num', type=int, default=1200,
+                    #help='maximal number of main iterations (default: 512)')
+parser.add_argument('--episode_num', type=int, default=4000,
+                    help='maximal number of episodes (default: 250)')
 parser.add_argument('--seed', type=int, default=42,
                     help='random seed (default: 42)')
 parser.add_argument('--logdir', type=str, default='logs',
@@ -59,14 +61,14 @@ def main_ppo():
     print('state size:', num_inputs) 
     print('action size:', num_actions)
 
-    actor = Actor(num_inputs, num_actions, args)
-    critic = Critic(num_inputs, args)
+    actor = Actor(num_inputs, num_actions, args.hidden_size)
+    critic = Critic(num_inputs, args.hidden_size)
 
     actor_optim = optim.Adam(actor.parameters(), lr=args.learning_rate)
     critic_optim = optim.Adam(critic.parameters(), lr=args.learning_rate, 
                               weight_decay=args.l2_rate)
 
-    writer = SummaryWriter(comment="-ppo_iter-" + str(args.max_iter_num))
+    writer = SummaryWriter(comment="-ppo_iter-" + str(args.episode_num))
     
     if args.load_model is not None:
         saved_ckpt_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
@@ -83,11 +85,11 @@ def main_ppo():
 
     
     episodes = 0    
-
-    for iter in range(args.max_iter_num):
+    iter = 0
+    while True:
+        iter+=1
         actor.eval(), critic.eval()
         memory = deque()
-        memory2=[]
         steps = 0
         scores = []
 
@@ -114,11 +116,6 @@ def main_ppo():
 
                 memory.append([state, action, reward, mask])
 
-                newlist=list(state[:])
-                newlist.extend(list(action[:]))
-                #newlist.append(reward)
-                memory2.append(newlist)
-
                 next_state = running_state(next_state)
                 state = next_state
 
@@ -129,10 +126,11 @@ def main_ppo():
             
             episodes += 1
             scores.append(score)
-        
+        if episodes > args.episode_num:
+            break
         score_avg = np.mean(scores)
         print('{}:: {} episode score is {:.2f}'.format(iter, episodes, score_avg))
-        writer.add_scalar('log/score', float(score_avg), iter)
+        writer.add_scalar('log/score', float(score_avg), episodes)
         actor.train(), critic.train()
         train_model(actor, critic, memory, actor_optim, critic_optim, args)
 
@@ -143,8 +141,7 @@ def main_ppo():
             if not os.path.isdir(model_path):
                 os.makedirs(model_path)
             ckpt_path = os.path.join(model_path, 'ckpt_'+ str(score_avg)+'.pth.tar')
-            pickle_path = os.path.join(model_path, 'pickle_'+ str(score_avg)+'.p')
-            save_pickle(memory2,pickle_path)
+            
             save_checkpoint({
                 'actor': actor.state_dict(),
                 'critic': critic.state_dict(),

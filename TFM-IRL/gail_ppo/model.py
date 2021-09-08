@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 class Actor(nn.Module):
-    def __init__(self, num_inputs, num_outputs, args):
+    def __init__(self, num_inputs, num_outputs, hidden_size):
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(num_inputs, args.hidden_size)
-        self.fc2 = nn.Linear(args.hidden_size, args.hidden_size)
-        self.fc3 = nn.Linear(args.hidden_size, num_outputs)
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, num_outputs)
         
         self.fc3.weight.data.mul_(0.1)
         self.fc3.bias.data.mul_(0.0)
@@ -21,11 +21,11 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, num_inputs, args):
+    def __init__(self, num_inputs, hidden_size):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(num_inputs, args.hidden_size)
-        self.fc2 = nn.Linear(args.hidden_size, args.hidden_size)
-        self.fc3 = nn.Linear(args.hidden_size, 1)
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, 1)
         
         self.fc3.weight.data.mul_(0.1)
         self.fc3.bias.data.mul_(0.0)
@@ -38,11 +38,11 @@ class Critic(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, num_inputs, args):
+    def __init__(self, num_inputs, hidden_size):
         super(Discriminator, self).__init__()
-        self.fc1 = nn.Linear(num_inputs, args.hidden_size)
-        self.fc2 = nn.Linear(args.hidden_size, args.hidden_size)
-        self.fc3 = nn.Linear(args.hidden_size, 1)
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, 1)
         
         self.fc3.weight.data.mul_(0.1)
         self.fc3.bias.data.mul_(0.0)
