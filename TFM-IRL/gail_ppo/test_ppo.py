@@ -13,7 +13,7 @@ parser.add_argument('--env', type=str, default="LunarLanderContinuous-v2",
                     help='name of Mujoco environement')
 parser.add_argument('--iter', type=int, default=500,
                     help='number of episodes to play')
-parser.add_argument("--load_model", type=str, default='ckpt_216.pth.tar',
+parser.add_argument("--load_model", type=str, default='Top_ckpt_255.pth.tar',
                      help="if you test pretrained file, write filename in save_model folder")
 parser.add_argument('--hidden_size', type=int, default=64, 
                     help='hidden unit size of actor, critic networks (default: 64)')
@@ -57,18 +57,18 @@ if __name__ == "__main__":
 
     actor.eval(), critic.eval()
     memory2=[]
-    a=0
-    episode=0
-    for a in range(1500):
+    mean_score =0
+    episode=b=0
+    print(id(b))
+    print(id(episode))
+    while b in range(50):
         episode+=1
         state = env.reset()
         steps = 0
         score = 0
         episodelist=[]
-        for _ in range(10000):
-            
-            #env.render()
-
+        for _ in range(10000): 
+            env.render()
             mu, std = actor(torch.Tensor(state).unsqueeze(0))
             action = get_action(mu, std)[0]
 
@@ -84,11 +84,15 @@ if __name__ == "__main__":
             
             if done:
                 break
-        if score > 190:
-            a+=1
-            print("{} cumulative reward: {}".format(episode, score))
+
+        if score > 200:
+            b+=1
+            print("{} {} cumulative reward: {}".format(b, episode, score))
             memory2.extend(episodelist)
-            
+            mean_score += score
+
+    mean_score /= b
+    print(b)     
     demo_path = os.path.join(os.getcwd(),'expert_demo')
-    pickle_path = os.path.join(demo_path, 'expert_demo.p')
+    pickle_path = os.path.join(demo_path, 'expert_demo_750_ms'+ str(mean_score) +'.p')
     save_pickle(memory2,pickle_path)

@@ -49,7 +49,7 @@ parser.add_argument('--suspend_accu_exp', type=float, default=0.8,
                     help='GAIL accuracy for suspending discriminator about expert data (default: 0.8)')
 parser.add_argument('--suspend_accu_gen', type=float, default=0.8,
                     help='GAIL accuracy for suspending discriminator about generated data (default: 0.8)')
-parser.add_argument('--episode_num', type=int, default=15000,
+parser.add_argument('--episode_num', type=int, default=10000,
                     help='maximal number of episodes (default: 250)')
 parser.add_argument('--seed', type=int, default=42,
                     help='random seed (default: 42)')
@@ -79,12 +79,12 @@ def main():
                               weight_decay=args.l2_rate)
     if args.gail:
         discrim_optim = optim.Adam(discrim.parameters(), lr=args.learning_rate)
-        expert_demo = pickle.load(open('expert_demo\expert_demo.p', "rb"))
+        expert_demo = pickle.load(open('expert_demo\expert_demo_300_ms244.665498101087.p', "rb"))
         demonstrations = np.array(expert_demo)
         print("demonstrations.shape", demonstrations.shape)
-        writer = SummaryWriter(comment="-gail_episode_num-" + str(args.episode_num))
+        writer = SummaryWriter(comment="-gail_episode_num-epi_" + str(args.episode_num)+"-shape_"+str(demonstrations.shape))
     else:
-        writer = SummaryWriter(comment="-ppo_iter-" + str(args.episode_num))
+        writer = SummaryWriter(comment="-ppo_iter-epi_" + str(args.episode_num))
     
     if args.load_model is not None:
         saved_ckpt_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
@@ -105,9 +105,9 @@ def main():
     episodes = 0    
     iter = 0
     train_discrim_flag = True
-    while True:
+    while episodes <= args.episode_num:
         iter+=1
-        actor.eval(), critic.eval()
+        #actor.eval(), critic.eval()
         memory = deque()
         steps = 0
         scores = []
@@ -147,8 +147,6 @@ def main():
             
             episodes += 1
             scores.append(score)
-        if episodes > args.episode_num:
-            break
 
         score_avg = np.mean(scores)
         print('{}:: {} episode score is {:.2f}'.format(iter, episodes, score_avg))
