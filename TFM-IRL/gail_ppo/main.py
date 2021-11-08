@@ -71,6 +71,7 @@ def main():
 
     actor = Actor(num_inputs, num_actions, args.hidden_size)
     critic = Critic(num_inputs, args.hidden_size)
+    
     if args.gail:
         discrim = Discriminator(num_inputs + num_actions, args.hidden_size)
 
@@ -112,7 +113,7 @@ def main():
         steps = 0
         scores = []
 
-        while steps < args.total_sample_size: 
+        while steps < args.sample: 
             state = env.reset()
             score = 0
 
