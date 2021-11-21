@@ -113,7 +113,7 @@ def main():
         steps = 0
         scores = []
 
-        while steps < args.sample: 
+        while steps < args.total_sample_size: 
             state = env.reset()
             score = 0
 
@@ -135,8 +135,11 @@ def main():
                     mask = 0
                 else:
                     mask = 1
-
-                memory.append([state, action, reward, mask])
+                    
+                if args.gail:
+                    memory.append([state, action, irl_reward, mask])
+                else:
+                    memory.append([state, action, reward, mask])
 
                 next_state = running_state(next_state)
                 state = next_state

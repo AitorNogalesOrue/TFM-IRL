@@ -12,7 +12,7 @@ parser.add_argument('--env', type=str, default="LunarLanderContinuous-v2",
                     help='name of Mujoco environement')
 parser.add_argument('--iter', type=int, default=5,
                     help='number of episodes to play')
-parser.add_argument("--load_model", type=str, default='ppo_max.tar',
+parser.add_argument("--load_model", type=str, default='Top_gail_ckpt_248.pth.tar',
                      help="if you test pretrained file, write filename in save_model folder")
 parser.add_argument('--hidden_size', type=int, default=64, 
                     help='hidden unit size of actor, critic networks (default: 64)')
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     print("state size: ", num_inputs)
     print("action size: ", num_actions)
 
-    actor = Actor(num_inputs, num_actions)
-    critic = Critic(num_inputs)
+    actor = Actor(num_inputs, num_actions,args.hidden_size)
+    critic = Critic(num_inputs,args.hidden_size)
 
     running_state = ZFilter((num_inputs,), clip=5)
     
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         score = 0
         for _ in range(10000):
             env.render()
-            mu, std, _ = actor(torch.Tensor(state).unsqueeze(0))
+            mu, std= actor(torch.Tensor(state).unsqueeze(0))
             action = get_action(mu, std)[0]
 
             next_state, reward, done, _ = env.step(action)
